@@ -1,0 +1,19 @@
+TODO:
+
+A table for CDDB info
+A table for extended metadata
+A table for track ratings (trackID, user, rating)
+A Python-based app for adding tags to files (python for the picard/musicbrainz libraries...)
+Alternately, perl-based app to do same (...but this can be done by exporting picard's results to a CSV and using perl, which I like better)
+A PHP-based Web app for generating a playlist based on metadata
+	Generate form:
+		For each tags type, make a column with checkboxes
+			Tag types: genre, mood, style, favorite, content
+		For each tag, add it to the appropriate column
+		Add a column for rating 1-5 stars
+		Add a double slider for track length
+	Submit button generates a SQL query and outputs the resulting data to an M3U playlist
+	Playlist link returned to browser or (if feasible) is passed to XMMS2 client to play over LAN.
+		We can write a config for ezstream that points to a playlist we generated, then call ezstream with that config.
+		That stream address can then be displayed to the viewer, or possibly passed directlyto their browser to load.
+
