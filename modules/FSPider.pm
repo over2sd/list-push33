@@ -85,7 +85,7 @@ print "....$attrs....";
 
 sub loadFile {
 	#- Open mp3 file
-	my ($self,$filename) = @_;
+	my ($self,$filename,$status) = @_;
 	if (defined $filename) {
 		$self->set("fn",$filename);
 		if (defined $self->{playb} ) { # prevent multiple play buttons
@@ -94,24 +94,26 @@ sub loadFile {
 	} else {
 		$filename = $self->get("fn");
 	}
+	$filename = Common::convertPath($filename,1);
 	$mci->Call("open $filename alias mysound",$retstring,256,0);
 	my $pbut = $self->{plpar}->insert( Button => text => "[>", onClick => sub { #- Play it
+		defined $status && $status->push("Playing $filename...");
+		defined $status && !(-s $filename) && $status->push("File $filename doesn't exist!");
 		$mci->Call("play mysound",$retstring,256,0);
 		} );
 	$self->set("playb",$pbut);
-#	$self->{sqlid} = Sui::getTrack($filename,0);
-	$self->{sqlid} = getTrack("2001-Unknown-006.ogg",0);
-
+	($self->{sqlid},$self->{title}) = getTrack("$filename",0);
+	print "My SQL ID is " . $self->{sqlid} . "..." if main::howVerbose() > 3;
 	return 0;
 }
 print ".";
 
 sub buildPlayer {
-	my ($win,$dbh,$fn) = @_;
+	my ($win,$dbh,$fn,$status) = @_;
 	my ($playerparent,) = PGK::labeledRow($win, "Controls: ", name => "Music Player", boxfill => 'x', boxex => 0, labfill => 'x', labex => 0 );
 	my $pbutp = $playerparent->insert( HBox => name => "Play button parent" );
 	my $fco = FSPider->new(fn => $fn, playerparent => $pbutp );
-	$fco->loadFile($fn);
+	$fco->loadFile($fn,$status);
 	my $stopbut = $playerparent->insert( Button => text => "||", onClick => sub { $mci->Call("pause mysound",$retstring,256,0); } );
 	my $nextbut = $playerparent->insert( Button => text => ">|", onClick => sub { PGUI::devHelp($target, "Playing the next track"); } );
 	return $fco;
@@ -127,15 +129,31 @@ print ".";
 Common::registerErrors('FSPider::getTrack',"[E] Can't use database. Database not stored in Sui!: %s","[E] Can't get track without a filename to seek! %s");
 
 sub getTrack {
-	my ($fn,$field) = @_;
-return; # until I can fix the DB module
+	my ($value,$field) = @_;
 	my $dbh = Sui::passData('dbh') or Common::errorOut("FSPider::getTrack",1, fatal => 0);
-	Common::errorOut("FSPider::getTrack",2) unless defined $fn;
+	Common::errorOut("FSPider::getTrack",2) unless defined $value;
 	if ($field == 0) {
-		return FlexSQL::doQuery(0,$dbh,"SELECT trackid FROM cddbmeta WHERE file = ?;",$fn);
+print "Trying query for $value...";
+		my ($result,$error,$value) = FlexSQL::doQuery(6,$dbh,"SELECT trackid, title FROM cddbmeta WHERE file = ?;",$value);
+		return (%$result->{trackid} or 0, %$result->{title} or "Missing Title");
+#		return FlexSQL::doQuery(8,$dbh,"SELECT trackid FROM cddbmeta WHERE file LIKE '%$fn%';",$fn);
+	} elsif ($field == 1) {
+print "Trying query for Track # $value...";
+		my ($result,$error,$value) = FlexSQL::doQuery(6,$dbh,"SELECT title, path, file FROM cddbmeta WHERE trackid = ?;",$value);
+		return $result;
 	}
 	warn "\n[W] Unrecognized field passed to getTrack ($field)";
 	return undef;
+}
+print ".";
+
+sub getUnpenciled {
+	my ($self,$arg) = @_;
+	my $dbh = Sui::passData('dbh') or Common::errorOut("FSPider::getUnpenciled",1, fatal => 0);
+	my $smt = "SELECT cddbmeta.trackid, path, file FROM cddbmeta LEFT OUTER JOIN xmeta ON cddbmeta.trackid = xmeta.trackid WHERE xmeta.trackid IS NULL LIMIT 1;";
+	my ($result,$err,$val) = FlexSQL::doQuery(6,$dbh,$smt);
+print "I received $err: $val...";
+	return $result;
 }
 print ".";
 

@@ -777,5 +777,15 @@ sub pad { # recipe from perlfaq (READ" pad TEXT to LENGTH with CHAR
 }
 print ".";
 
+sub convertPath {
+	my ($pathstr,$direction) = @_;
+	if ($direction == 1) {
+		$pathstr =~ s.\\./.g;
+	} else {
+		$pathstr =~ s./.\\.g;
+	}
+	return $pathstr;
+}
+
 print " OK; ";
 1;

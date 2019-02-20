@@ -88,8 +88,9 @@ sub resetPencil {
 	my $pcase = $pbox->insert( VBox => name => "Pencil case", pack => { fill => 'y', expand => 0, } );
 	my %props = ( pack => { fill => 'x', expand => 0 }, min => 0, max => 9, shaftBreadth => 5, width => $bw, height => $bh, ticks => [{value => 0, height => 3, text => '0'},{value => 4, height => 3, text => '4'},{value => 9,height => 3,text => '9'}] );
 	
-	my @row = labeledRow($pcase,"Anxiety",boxfill => 'x', boxex => 0, labfill => 'none', labex => 0, labelargs => width => $lw  );
-	my $pc = $row[0];
+	my $pc = $pcase->insert( HBox => name => "p", alignment => ta::Left );
+	$pc->pack( fill => 'x', expand => 0, padx => 3, pady => 1, );
+	$pc->insert( Label => text => "Anxiety", width => $lw );
 	my $pcp = $pc->insert( Slider => name => "peace", %props );
 	$pc->insert( Label => text => "Peace", width => $lw );
 	$fco->pencil(0,$pcp);
@@ -156,8 +157,11 @@ sub populateMainWin {
 	my ($dbh,$gui,$refresh) = @_;
 	($refresh && (defined $$gui{pager}) && $$gui{pager}->destroy());
 	my $win = $$gui{mainWin};
-	my $fn = "test.mp3";
-	my $player = FSPider::buildPlayer($win,$dbh,$fn); # returns filecontrol object
+	my $stat = $$gui{status};
+	my $fio = FSPider::getUnpenciled();
+	my $fn = %$fio->{path};
+	$fn = "$fn" . %$fio->{file};
+	my $player = FSPider::buildPlayer($win,$dbh,$fn,$stat); # returns filecontrol object
 	my @tabs = qw( PENCIL Data Rating Stats );
 	my $pager = $win->insert( Pager => name => 'Pages', pack => { fill => 'both', expand => 1}, );
 	$pager->build(@tabs);

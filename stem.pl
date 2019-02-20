@@ -42,9 +42,8 @@ my $gui = PGK::createMainWin($PROGRAMNAME,$version,800,570);
 my $text = $$gui{status};
 #PGK::startwithDB($gui,$PROGRAMNAME,0);
 
-my $dbh = FlexSQL::getDB('L') or undef;
+my ($dbh,$error) = FlexSQL::getDB('L') or undef;
 Sui::storeData('dbh',$dbh);
-print "$dbh - " . ref($dbh) . "\n";
 PGUI::populateMainWin($dbh,$gui,0);
 
 sub beforeClosing {

@@ -7,8 +7,19 @@ require Exporter;
 @EXPORT_OK = qw(getDB closeDB);
 
 use FIO qw( config );
-use PGK qw( Pdie );
 use Sui;
+
+sub Pdie {
+	return PGK::Pdie(@_) or NoGUI::Pdie(@_);
+}
+
+sub Pfresh {
+	if (FIO::config('UI','GUI') == 'no') {
+		NoGUI::Pfresh();
+	} else {
+		PGK::Pfresh();
+	}
+}
 
 my $DBNAME = Sui::passData('dbname');
 my $DBHOST = Sui::passData('dbhost');
@@ -18,7 +29,10 @@ my $dbh;
 Common::registerErrors('FlexSQL::getDB',"[E] Cannot connect: %s","[E] DBI error from connect: %s","[E] Bad/no DB type passed to getDB! (%s)");
 Common::registerZero('FlexSQL::getDB',"[I] Database connection established.");
 sub getDB {
-	if (defined $dbh) { return $dbh; }
+	if (defined $dbh) {
+		(main::howVerbose() > 8) && print "\n[I] Returning existing DB handle...";
+		return $dbh;
+		}
 	my ($dbtype) = shift;
 	if ($dbtype eq "0") { return undef; } # flag for not creating DB if not available
 	unless (defined $dbtype) { $dbtype = FIO::config('DB','type'); } # try to save
@@ -27,7 +41,7 @@ sub getDB {
 		my $host = shift || "$DBNAME.dbl";
 		$dbh = DBI->connect( "dbi:SQLite:$host" ) || return undef,1,$DBI::errstr;
 #		$dbh->do("SET NAMES 'utf8mb4'");
-		print "\n[I] SQLite DB connected.\n" if main::howVerbose();
+		print "\n[I] SQLite DB $host connected.\n" if main::howVerbose() > 2;
 	} elsif ($dbtype eq "M") {
 		my $host = shift || "$DBHOST";
 		my $base = shift || "$DBNAME";
@@ -121,9 +135,9 @@ sub makeDB {
 print ".";
 
 sub makeTables { # used for first run
-	my ($dbh,$widget) = @_;
+	my ($dbh,$widget,$altfile) = @_;
 	print "Creating tables...";
-	open(TABDEF, "<$DBNAME.msq"); # open table definition file
+	open(TABDEF, ($altfile ? "<$altfile.msq" : "<$DBNAME.msq")); # open table definition file
 	my @cmds = <TABDEF>;
 	my $tot = scalar @cmds;
 	print "\n[I] Importing $tot lines.";
@@ -139,7 +153,7 @@ sub makeTables { # used for first run
 		my $error = doQuery(2,$dbh,$st);
 		$widget->text("Making tables... table " . $i + 1 . "/$tot" . ($error ? ": $st\n" : "" )) if defined $widget;
 		print ".";
-		$::application->yield();
+		Pfresh();
 		if($error) { return undef,$error; }
 	}
 	return $dbh,"OK";
@@ -155,6 +169,7 @@ sub doQuery {
 		Pdie("Baka! Send me a database, if you want data.");
 	}
 	my $safeq = $dbh->prepare($statement) or print "\nCould not prepare $statement" . Common::lineNo() . "\n";
+print $dbh->err;
 	if ($qtype == -1) { unless (defined $safeq) { return 0; } else { return 1; }} # prepare only
 	unless (defined $safeq) { warn "Statement could not be prepared! Aborting statement!\n"; return undef; }
 	if($qtype == 0){ # expect a scalar

@@ -1,0 +1,1 @@
+cpan Audio::Xmmsclient Config::IniFiles Prima

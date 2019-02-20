@@ -105,6 +105,9 @@ sub getOpts {
 		'034' => ['n',"Height and width of PENCIL graph",'graphsize'],
 		'039' => ['x',"Header background color code: ",'headerbg',"#CCCCFF"],
 		'043' => ['t',"Color codes for gradient (comma separated)",'gradient'],
+		
+		'040' => ['l',"Sound Options",'Sound'],
+		'041' => ['r',"Player to use: ",'player',0,"XMMS","VLC","Win32 API"],
 
 		'750' => ['l',"Fonts",'Font'],
 		'754' => ['f',"Tab font/size: ",'label'],
@@ -132,6 +135,7 @@ sub getDefaults {
 		['UI','notabs',1],
 		['Font','bigent',"Verdana 24"],
 		['Main','tz',-6],
+		['Sound','player','XMMS'],
 		['UI','gradient',"#F00,#F30,#F60,#F90,#FC0,#FF0,#CF0,#9F0,#6F0,#3F0,#0F0,#0F3,#0F6,#0F9,#0FC,#0FF,#0CF,#09F,#06F,#03F,#00F,#30F,#60F,#90F,#C0F,#F0F,#F0C,#F09,#F06,#F03,#EEF,#DDE,#CCD,#BBC,#AAB,#99A,#889,#778,#667,#556,#445,#334,#223,#112,#001"],
 	);
 }
